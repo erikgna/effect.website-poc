@@ -1,0 +1,6 @@
+Can setup manually or with create-effect-app
+
+Effect <Success, Error, Requirements>
+
+Defect is not a standard error but indicates a flaw in the logic that was expected to be error-free. 
+You can think of it similar to an unexpected crash in the program.
