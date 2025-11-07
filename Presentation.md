@@ -38,6 +38,65 @@ const getUser = (id: string) =>
   });
 ```
 
+```typescript
+import { Effect, Layer, Context } from "effect"
+
+// typed errors
+type NotFoundError = { _tag: "NotFoundError"; id: string }
+type DbError = { _tag: "DbError"; reason: string }
+
+// typed DI
+type User = { id: string; name: string; email: string }
+
+interface UserRepo {
+  getUser: (id: string) => Effect.Effect<User, NotFoundError | DbError>
+}
+
+// Create a typed "tag" for the service so we can inject/consume it safely
+const UserRepo = Context.Tag<UserRepo>("UserRepo")
+
+// In‑memory impl
+const userRepoLive = Layer.succeed(UserRepo, {
+  getUser: (id: string) => {
+    // EFFECT TYPE: return an Effect that can succeed OR fail — no throws.
+    if (id === "1") {
+      return Effect.succeed({ id, name: "Ada Lovelace", email: "ada@example.com" })
+    }
+    if (id === "oops") {
+      return Effect.fail({ _tag: "DbError", reason: "Connection lost" })
+    }
+    return Effect.fail({ _tag: "NotFoundError", id })
+  }
+})
+
+// Program: depends on UserRepo
+const program = Effect.gen(function* (_) {
+  const repo = yield* _(UserRepo)                  // get the service from context (no prop drilling)
+  const user = yield* _(repo.getUser("2"))         // typed failure: NotFoundError | DbError
+  // Any side-effect goes here
+  return `Hello, ${user.name}!`
+})
+
+// Handling typed errors explicitly
+const handled = program.pipe(
+  Effect.match({
+    onSuccess: (msg) => `OK: ${msg}`,
+    onFailure: (e) => {
+      switch (e._tag) {
+        case "NotFoundError":
+          return `User ${e.id} not found`
+        case "DbError":
+          return `Database error: ${e.reason}`
+      }
+    }
+  }),
+  // Provide the service implementation via a Layer (type-safe DI)
+  Effect.provide(userRepoLive)
+)
+
+Effect.runPromise(handled).then(console.log).catch(console.error)
+```
+
 ## Slide 4: TRADE-OFFS (45 seconds)
 
 ### Visual: Two columns - PROS vs CONS
