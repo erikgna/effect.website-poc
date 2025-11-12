@@ -4,16 +4,45 @@
 
 "Today I'm showing you Effect - a TypeScript framework that fundamentally changes how we handle errors, async operations, and side effects. If you've ever struggled with try-catch hell or runtime errors that TypeScript couldn't catch, this will change your development experience."
 
-## Slide 2: WHAT IS EFFECT? (45 seconds)
+## Slide 2: THE PROBLEM? (45 seconds)
 
-### Visual: Simple diagram showing traditional TypeScript vs Effect approach
+### Visual: Code snippet showing traditional TypeScript pain points
 
-"Effect is a TypeScript library for building robust, type-safe applications. Think of it as a functional programming toolkit that makes your code predictable and your errors manageable. It's not just error handling - it's a complete system for managing effects like API calls, database operations, and any side effects in your application."
+Before we dive into Effect, let's talk about what it solves. In traditional TypeScript:
 
-- Full type safety from end to end
-- Explicit error handling - no hidden exceptions
+- Hidden Failures: Async functions can fail in ways TypeScript doesn't track
+- Error Handling Chaos: Try-catch blocks everywhere, or worse - forgotten error handling
+- Dependency Hell: Passing dependencies through layers of functions
+- Testing Nightmares: Mocking HTTP clients, databases, external services
+
+Effect was built specifically to solve these problems with type safety."
+
+## Slide 3: WHAT IS EFFECT - Architecture (60 seconds)
+
+### Visual: Diagram showing Effect's core concept - Effect<Success, Error, Requirements>
+
+"Effect is a functional TypeScript framework for building robust applications. Here's the core concept:
+
+### Effect Type: Effect<Success, Error, Requirements>
+
+- Success: What you get when everything works
+- Error: What can go wrong (typed!)
+- Requirements: What dependencies you need
+
+### This single type tells you everything about your operation:
+
+- What it returns
+- How it can fail (no surprise exceptions!)
+- What services it needs to run
+
+### It's like a contract for your async operations, but enforced by TypeScript at compile time."
+
+Key features:
+
+- Full type safety for errors and dependencies
 - Built-in dependency injection
 - Composable and testable by design
+- Lazy evaluation - nothing runs until you tell it to
 
 ## Slide 3: HOW IT WORKS - Architecture (60 seconds)
 
@@ -25,99 +54,26 @@
 2. **Error Channels**: Unlike try-catch, errors are part of your type signature. TypeScript forces you to handle them - no more surprise runtime crashes.
 3. **Service Layer**: Dependencies are injected through a type-safe layer system. No more prop drilling or messy dependency management."
 
-```typescript
-async function getUser(id: string) {
-  return await fetch(`/api/users/${id}`);
-}
-
-// Effect
-const getUser = (id: string) =>
-  Effect.gen(function* () {
-    const response = yield* HttpClient.get(`/api/users/${id}`);
-    return yield* response.json;
-  });
-```
-
-```typescript
-import { Effect, Layer, Context } from "effect"
-
-// typed errors
-type NotFoundError = { _tag: "NotFoundError"; id: string }
-type DbError = { _tag: "DbError"; reason: string }
-
-// typed DI
-type User = { id: string; name: string; email: string }
-
-interface UserRepo {
-  getUser: (id: string) => Effect.Effect<User, NotFoundError | DbError>
-}
-
-// Create a typed "tag" for the service so we can inject/consume it safely
-const UserRepo = Context.Tag<UserRepo>("UserRepo")
-
-// In‑memory impl
-const userRepoLive = Layer.succeed(UserRepo, {
-  getUser: (id: string) => {
-    // EFFECT TYPE: return an Effect that can succeed OR fail — no throws.
-    if (id === "1") {
-      return Effect.succeed({ id, name: "Ada Lovelace", email: "ada@example.com" })
-    }
-    if (id === "oops") {
-      return Effect.fail({ _tag: "DbError", reason: "Connection lost" })
-    }
-    return Effect.fail({ _tag: "NotFoundError", id })
-  }
-})
-
-// Program: depends on UserRepo
-const program = Effect.gen(function* (_) {
-  const repo = yield* _(UserRepo)                  // get the service from context (no prop drilling)
-  const user = yield* _(repo.getUser("2"))         // typed failure: NotFoundError | DbError
-  // Any side-effect goes here
-  return `Hello, ${user.name}!`
-})
-
-// Handling typed errors explicitly
-const handled = program.pipe(
-  Effect.match({
-    onSuccess: (msg) => `OK: ${msg}`,
-    onFailure: (e) => {
-      switch (e._tag) {
-        case "NotFoundError":
-          return `User ${e.id} not found`
-        case "DbError":
-          return `Database error: ${e.reason}`
-      }
-    }
-  }),
-  // Provide the service implementation via a Layer (type-safe DI)
-  Effect.provide(userRepoLive)
-)
-
-Effect.runPromise(handled).then(console.log).catch(console.error)
-```
-
 ## Slide 4: TRADE-OFFS (45 seconds)
 
 ### Visual: Two columns - PROS vs CONS
 
 "Let's be honest about trade-offs:
 
-**PROS:**
+**BENEFITS:**
 
-1. Type safety catches errors at compile time, not production
-2. No more 'undefined is not a function' at 3 AM
-3. Testability is built-in - mock dependencies easily
-4. Scales incredibly well for complex applications
-5. Amazing developer experience once you learn it
+- Type safety catches errors at compile time, not production
+- Testability is built-in - mock dependencies easily
+- Scales incredibly well for complex applications
+- Error handling is explicit and trackable
 
-**CONS:**
+**CHALLENGES:**
 
-1. Steep learning curve - functional programming concepts required
-2. Smaller ecosystem compared to traditional libraries
-3. More verbose initially - more boilerplate upfront
-4. Team needs training - can't just jump in
-5. Overkill for simple CRUD apps"
+- Functional programming paradigm shift - different mental model
+- More verbose initially - more upfront code
+- Smaller community compared to mainstream libraries
+- Best suited for complex apps - might be overkill for simple CRUD
+- Requires team alignment on functional patterns
 
 ## Slide 5: LIVE DEMO (90 seconds)
 
@@ -129,11 +85,10 @@ Effect.runPromise(handled).then(console.log).catch(console.error)
 
 ### Visual: Comparison table
 
-"How does Effect compare?
+"How does Effect stack up against similar tools?
 
-1. vs fp-ts: Effect is more batteries-included, better developer experience, active development
-2. vs Zod: Zod does validation, Effect does the entire application layer
-3. vs Traditional async/await: Effect adds type-safe error handling and dependency injection
-4. vs Railway-Oriented Programming: Effect is ROP with superpowers and TypeScript integration"
+Key Differentiators:
 
-"Think of Effect as: fp-ts + Zod + dependency injection + error handling all working together seamlessly."
+1. vs RxJS: Effect handles errors in the type system, not at runtime
+2. vs fp-ts: More batteries-included, better DX, actively developed
+3. vs Zod: Zod validates data, Effect manages your entire application layer

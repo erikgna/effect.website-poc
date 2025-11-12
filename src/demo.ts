@@ -29,9 +29,9 @@ const validateEmail = (user: typeof mockDB[1]): Effect.Effect<typeof mockDB[1], 
         ? Effect.succeed(user)
         : Effect.fail(new InvalidEmail(user.email))
 
-const program = Effect.gen(function* () {
+const program = Effect.gen(function* () { // Generator function to create an Effect
     // Try valid user
-    yield* Console.log("Fetching user 1...")
+    yield* Console.log("Fetching user 1...") // yield is used to suspend the Effect and wait for the next value
     const user1 = yield* Effect.either(getUser(1));
     if (user1._tag === 'Right') {
         const validated1 = yield* validateEmail(user1.right)
