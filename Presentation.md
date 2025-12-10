@@ -36,10 +36,10 @@ Effect was built specifically to solve these problems with type safety.
 
 **CHALLENGES:**
 
-- Functional programming paradigm shift - different mental model
-- More verbose initially - more upfront code
+- **More generated types in the system**: advanced type inference (especially for errors and services) can produce complex composite types that are harder to inspect in IDEs without familiarity.
+- **Higher abstraction density**: Features like Layers, Context, scoped resources, and environment injection introduce multiple architectural abstractions that don’t exist in standard TypeScript/Node.
 - Smaller community compared to mainstream libraries
-- Best suited for complex apps - might be overkill for simple CRUD
+- **Runtime abstraction layer**: Effect replaces native async/await with its own fiber runtime, which means debugging and stack traces operate through Effect’s execution model rather than the JS call stack.
 
 ## COMPARISONS
 
@@ -48,3 +48,38 @@ Effect was built specifically to solve these problems with type safety.
 1. vs RxJS: Effect handles errors in the type system, not at runtime
 2. vs fp-ts: More batteries-included, better DX, actively developed
 3. vs Zod: Zod validates data, Effect manages your entire application layer
+
+## Presentation
+
+### Hidden Failures
+
+**Default**
+In normal TypeScript, an async function can throw, but nothing in the type system tells you that.
+The caller has no idea this function may explode at runtime.
+**Effect**
+Now the function returns Effect<User, GetUserError>.
+Errors are explicit, typed, and impossible to ignore.
+
+### Error Chaos
+
+**Default**
+In plain TS, sync and async errors behave differently, making consistent error handling almost impossible.
+**Effect**
+In Effect, both become unified:
+Everything is handled through a single, typed error channel.
+
+### Dependency Hell
+
+**Default**
+Normal TS forces you to pass shared dependencies everywhere:
+**Effect**
+With Effect, dependencies are injected automatically using Layers:
+No more threading ctx through your whole call stack.
+
+### Testing Nightmare
+
+**Default**
+In plain TS, testing requires complex object mocks:
+**Effect**
+But in Effect, you just swap the Layer:
+No mocks, no jest.fn — just a different implementation of the same service.
