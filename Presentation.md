@@ -63,6 +63,8 @@ Effect was built specifically to solve these problems with type safety.
 
 ### Error Chaos
 
+# Explain generator function - yield stop the execution while not completed
+
 **Default**
 - In plain TS, sync and async errors behave differently, making consistent error handling almost impossible.
 
