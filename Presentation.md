@@ -1,30 +1,24 @@
 ## Title
 
-Today I'm showing you Effect - A TypeScript framework that rethinks how we handle failures, async operations, and dependencies — with the compiler on your side.
+Today I'm showing you Effect - A TypeScript runtime for predictable concurrency, dependency management, and side effects
 
 ## THE PROBLEM?
 
-What breaks in traditional TypeScript?
-
-- Hidden Failures: Async functions can fail in ways TypeScript doesn’t track. A Promise<T> tells you nothing about how it can fail.
-- Error Handling Chaos: try/catch blocks spread everywhere — or worse, missing entirely.
-- Dependency Hell: Dependencies are passed through layers of functions, tightly coupling everything
-- Testing Nightmares: Mocking HTTP clients, databases, and external services is painful and fragile
-
-These problems scale with your codebase.
+"This function looks fine, but it starts async work immediately, with no cancellation or supervision.
+Dependencies like payments and the database are global and implicit.
+Side effects are mixed with logic.
+And failures are completely untyped — we only discover them at runtime"
 
 ## WHY EFFECT Exists
 
-**Effect was built to fix this — at the type level**
+“Here, we’re not executing code yet — we’re describing it.
+The type tells us the result, every possible failure, and every dependency.
+Execution is lazy, cancelable, and supervised.
+Side effects are explicit, and dependencies are injected, not hidden.
 
-Effect enforces correctness by design:
-
-- Errors are explicit and typed
-- Side effects are controlled and declarative
-- Dependencies are injected safely
-- Tests don’t require hacks or globals
-
-This is not just a library — it’s an application runtime.
+On top of that, Effect runs this using fibers — lightweight, cancelable units of concurrency.
+You can run thousands safely, compose them, and cancel them as a group.
+And with Layers, we swap implementations without touching business logic.”
 
 ## WHAT IS EFFECT
 
